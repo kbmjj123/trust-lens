@@ -9,9 +9,8 @@
 
 const MAX_RECORDS = 500;
 const listeners = new Set();
-
-let started = false;
-const records = [];
+const seenUrls = new Set();
+let resourceObserver = null;
 
 /* ────────────── 工具函数 ────────────── */
 
@@ -21,6 +20,35 @@ function safeParseUrl(url) {
   } catch {
     return null;
   }
+}
+
+/**
+ * URL 脱敏：保留协议 / 域名 / 路径与查询参数名，将参数值替换为 ***。
+ * 既满足「不保存具体值」的隐私底线，又不影响基于 host/path/keys 的分类。
+ */
+function maskUrl(url) {
+  if (typeof url !== 'string') return url;
+  const q = url.indexOf('?');
+  if (q < 0) return url;
+  const base = url.slice(0, q);
+  const masked = url
+    .slice(q + 1)
+    .split('&')
+    .map((pair) => {
+      const eq = pair.indexOf('=');
+      return eq < 0 ? pair : pair.slice(0, eq) + '=***';
+    })
+    .join('&');
+  return base + '?' + masked;
+}
+
+/** 记录已采集的 URL，避免 sendBeacon / WebSocket 与 resource timing 重复计数 */
+function markSeen(url) {
+  const u = safeParseUrl(typeof url === 'string' ? url : String(url));
+  const key = u ? u.href : String(url);
+  if (seenUrls.has(key)) return true;
+  seenUrls.add(key);
+  return false;
 }
 
 export function getDomain(url) {
@@ -110,16 +138,18 @@ function objKeys(obj, depth = 0) {
 
 /* ────────────── 记录构造 ────────────── */
 
-function createRecord({ url, method, body, headers, source }) {
-  const u = safeParseUrl(url);
+function createRecord({ url, method, body, headers, source, credentials = false }) {
+  const rawUrl = url && typeof url === 'object' && url.url ? url.url : String(url);
+  const safeUrl = maskUrl(rawUrl);
+  const u = safeParseUrl(safeUrl);
   return {
     id: Math.random().toString(36).slice(2, 10),
-    url: url && typeof url === 'object' && url.url ? url.url : String(url),
+    url: safeUrl,
     method: (method || 'GET').toUpperCase(),
     domain: u ? u.hostname : '',
     path: u ? u.pathname : '',
-    sameSite: isSameSite(url),
-    source, // fetch | xhr | resource
+    sameSite: isSameSite(safeUrl),
+    source, // fetch | xhr | resource | beacon | websocket
     startTime: Date.now(),
     duration: null,
     status: null,
@@ -127,6 +157,7 @@ function createRecord({ url, method, body, headers, source }) {
     bodyFingerprint: fingerprintBody(body),
     headerKeys: headerKeys(headers),
     hasCredential: hasCredentialHeader(headers),
+    crossOriginCreds: !!credentials,
     done: false,
   };
 }
@@ -150,7 +181,7 @@ function emitUpdate(rec) {
 /* ────────────── Hook：fetch ────────────── */
 
 function hookFetch() {
-  if (typeof window === 'undefined' || typeof window.fetch !== 'function') return;
+  if (typeof window === 'undefined' || window.fetch !== 'function') return;
   const orig = window.fetch;
   if (orig.__trustLens) return;
 
@@ -176,10 +207,11 @@ function hookFetch() {
       if (init.body !== undefined) body = init.body;
       if (init.headers) headers = init.headers;
     }
+    const credentials = init && init.credentials === 'include';
 
     let rec;
     try {
-      rec = createRecord({ url, method, body, headers, source: 'fetch' });
+      rec = createRecord({ url, method, body, headers, source: 'fetch', credentials });
       push(rec);
     } catch {
       rec = null;
@@ -225,7 +257,7 @@ function hookXHR() {
   const origSetHeader = proto.setRequestHeader;
 
   proto.open = function (method, url) {
-    this.__tl = { method, url, headerKeys: [] };
+    this.__tl = { method, url, headerKeys: [], crossOriginCreds: false };
     return origOpen.apply(this, arguments);
   };
 
@@ -237,6 +269,7 @@ function hookXHR() {
   proto.send = function (body) {
     if (this.__tl) {
       const m = this.__tl;
+      m.crossOriginCreds = this.withCredentials === true;
       let rec;
       try {
         rec = createRecord({
@@ -245,6 +278,7 @@ function hookXHR() {
           body,
           headers: m.headerKeys,
           source: 'xhr',
+          credentials: m.crossOriginCreds,
         });
         rec.headerKeys = m.headerKeys;
         rec.hasCredential = m.headerKeys.some(
@@ -272,6 +306,53 @@ function hookXHR() {
   Orig.__trustLens = true;
 }
 
+/* ────────────── Hook：sendBeacon ────────────── */
+
+function hookBeacon() {
+  if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return;
+  const orig = navigator.sendBeacon;
+  if (orig.__trustLens) return;
+  const patched = function (url, data) {
+    try {
+      const rec = createRecord({
+        url: String(url),
+        method: data ? 'POST' : 'GET',
+        body: data,
+        source: 'beacon',
+      });
+      markSeen(String(url));
+      push(rec);
+    } catch {
+      /* noop */
+    }
+    return orig.apply(this, arguments);
+  };
+  patched.__trustLens = true;
+  navigator.sendBeacon = patched;
+}
+
+/* ────────────── Hook：WebSocket ────────────── */
+
+function hookWebSocket() {
+  if (typeof window === 'undefined' || typeof window.WebSocket === 'undefined') return;
+  const Orig = window.WebSocket;
+  if (Orig.__trustLens) return;
+  function Patched(url, protocols) {
+    try {
+      const rec = createRecord({ url: String(url), method: 'WS', source: 'websocket' });
+      markSeen(String(url));
+      push(rec);
+    } catch {
+      /* noop */
+    }
+    return protocols ? new Orig(url, protocols) : new Orig(url);
+  }
+  Patched.prototype = Orig.prototype;
+  Object.setPrototypeOf(Patched, Orig);
+  Patched.__trustLens = true;
+  window.WebSocket = Patched;
+}
+
 /* ────────────── 静态资源：PerformanceObserver ────────────── */
 
 function observeResources() {
@@ -282,6 +363,7 @@ function observeResources() {
       .getEntriesByType('resource')
       .slice(-200)
       .forEach((r) => {
+        if (markSeen(r.name)) return;
         push(
           Object.assign(
             createRecord({ url: r.name, method: 'GET', source: 'resource' }),
@@ -297,6 +379,7 @@ function observeResources() {
     const po = new PerformanceObserver((list) => {
       list.getEntries().forEach((r) => {
         if (r.entryType !== 'resource') return;
+        if (markSeen(r.name)) return;
         push(
           Object.assign(
             createRecord({ url: r.name, method: 'GET', source: 'resource' }),
@@ -305,6 +388,7 @@ function observeResources() {
         );
       });
     });
+    resourceObserver = po;
     po.observe({ entryTypes: ['resource'] });
   } catch {
     /* noop */
@@ -318,11 +402,23 @@ export function start() {
   started = true;
   hookFetch();
   hookXHR();
+  hookBeacon();
+  hookWebSocket();
   observeResources();
 }
 
 export function stop() {
   started = false;
+  listeners.clear();
+  seenUrls.clear();
+  if (resourceObserver) {
+    try {
+      resourceObserver.disconnect();
+    } catch {
+      /* noop */
+    }
+    resourceObserver = null;
+  }
 }
 
 export function getRecords() {
@@ -331,6 +427,7 @@ export function getRecords() {
 
 export function clearRecords() {
   records.length = 0;
+  seenUrls.clear();
   emitUpdate(null);
 }
 
@@ -339,4 +436,4 @@ export function onUpdate(fn) {
   return () => listeners.delete(fn);
 }
 
-export const __internals = { fingerprintBody, headerKeys };
+export const __internals = { fingerprintBody, headerKeys, maskUrl, markSeen };

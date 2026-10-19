@@ -8,9 +8,10 @@ import { chromium } from 'playwright';
 import { existsSync } from 'node:fs';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { resolve, extname } from 'node:path';
+import { resolve, extname, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = '/data/workspace/trust-lens';
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)));
 const MIME = {
   '.html': 'text/html',
   '.js': 'text/javascript',

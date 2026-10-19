@@ -9,13 +9,13 @@
   "jsdelivr": "./dist/trust-lens.min.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./index.d.ts",
       "import": "./dist/trust-lens.esm.js",
       "require": "./dist/trust-lens.cjs.js"
     },
     "./cdn": "./dist/trust-lens.min.js"
   },
-  "files": ["dist", "src", "README.md"],
+  "files": ["dist", "src", "index.d.ts", "README.md"],
   "sideEffects": false,
   "keywords": ["privacy", "transparency", "network", "trust", "gdpr"],
   "license": "MIT",

@@ -53,7 +53,10 @@ export function classify(rec, claims = []) {
   const host = rec.domain;
 
   // ── 1. 静态资源 ──
-  if (rec.source === 'resource' || (rec.method === 'GET' && STATIC_EXT.test(rec.path))) {
+  if (
+    rec.source === 'resource' ||
+    (rec.method === 'GET' && STATIC_EXT.test(rec.path) && rec.source !== 'beacon')
+  ) {
     const ext = (rec.path.match(STATIC_EXT) || [])[1];
     const kindName = ext ? guessAssetName(ext) : INITIATOR_LABEL[rec.initiatorType] || '静态资源';
     // 静态资源若命中追踪域名，仍然要标出来
@@ -65,6 +68,16 @@ export function classify(rec, claims = []) {
         title: `${KIND_LABEL[tr.kind] || '第三方'}（${tr.vendor}）`,
         detail: `这是由 ${tr.vendor} 提供的${KIND_LABEL[tr.kind] || '第三方'}脚本。它会看到你的 IP、浏览器信息与当前页面地址。`,
         tags: ['第三方', tr.vendor],
+      };
+    }
+    // 第三方资源若 URL 携带了数据参数（如追踪像素），视为未声明的数据提交
+    if (!rec.sameSite && carriesUserData(rec)) {
+      return {
+        kind: 'unexpected',
+        risk: 'high',
+        title: `向 ${host} 提交了数据（站点未声明）`,
+        detail: `这是一个 GET 请求，URL 中携带了你相关的参数，但站点没有声明它的用途。建议向站点所有者确认。`,
+        tags: ['未声明', 'GET'],
       };
     }
     return {
@@ -105,7 +118,7 @@ export function classify(rec, claims = []) {
   }
 
   // ── 4. 跨站携带凭证 ──
-  if (rec.hasCredential && !rec.sameSite) {
+  if ((rec.hasCredential || rec.crossOriginCreds) && !rec.sameSite) {
     return {
       kind: 'credential',
       risk: 'high',
@@ -135,6 +148,25 @@ export function classify(rec, claims = []) {
       detail: `与 ${host} 通信${rec.status ? `，返回状态 ${rec.status}` : ''}。未检测到你提交的内容。`,
       tags: ['本站'],
     };
+  }
+
+  // ── 7. WebSocket / 实时连接 ──
+  if (rec.source === 'websocket') {
+    return rec.sameSite
+      ? {
+          kind: 'internal',
+          risk: 'low',
+          title: '本站实时连接',
+          detail: `与 ${host} 建立了 WebSocket 实时连接，未检测到你提交的内容或身份凭证。`,
+          tags: ['本站'],
+        }
+      : {
+          kind: 'unknown',
+          risk: 'medium',
+          title: `与 ${host} 建立实时连接`,
+          detail: `与 ${host} 建立了 WebSocket 连接。实时通道不在常规请求采集范围内，请确认你是否信任该连接。`,
+          tags: ['第三方'],
+        };
   }
 
   return {

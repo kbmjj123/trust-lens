@@ -217,7 +217,7 @@ export function createUI({ root = document.body, siteName = '本站', claims = [
             <div><b>这个请求做了什么？</b><br>${escapeHtml(c.detail)}</div>
             <div style="margin-top:6px"><b>携带了什么？</b><br>${fpText}（仅记录字段名，不保存内容）</div>
             <div style="margin-top:6px"><b>风险等级：</b><span style="color:${risk.color};font-weight:700">${risk.label}</span></div>
-            <div style="margin-top:6px" class="tl-mono">${escapeHtml(truncate(c.raw.url, 160))}</div>
+            <div style="margin-top:6px" class="tl-mono">${escapeHtml(truncate(c.raw.url, 220))}</div>
           </div>`;
         el.addEventListener('click', () => {
           const id = c.raw.id;
