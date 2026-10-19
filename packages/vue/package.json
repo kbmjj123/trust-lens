@@ -1,0 +1,21 @@
+{
+  "name": "trust-lens-vue",
+  "version": "1.0.0",
+  "description": "TrustLens Vue 3 组件 —— 零构建，无需编译步骤",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "require": "./src/index.js"
+    }
+  },
+  "files": ["src", "README.md"],
+  "peerDependencies": {
+    "vue": "^3.0.0",
+    "trust-lens-core": "^1.0.0"
+  },
+  "keywords": ["privacy", "transparency", "vue", "trust"],
+  "license": "MIT"
+}

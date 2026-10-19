@@ -1,0 +1,19 @@
+{
+  "name": "trust-lens",
+  "version": "1.0.0",
+  "description": "让网站把数据流向摊开给用户看 —— 零依赖、零网络请求的开源透明组件",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node test-local.mjs",
+    "test:examples": "node test-examples.mjs",
+    "dev:vue": "npm --prefix examples/vue3 run dev",
+    "dev:react": "npm --prefix examples/react run dev",
+    "verify": "node scripts/verify-site.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
+  }
+}

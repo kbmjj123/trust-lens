@@ -1,0 +1,21 @@
+{
+  "name": "trust-lens-react",
+  "version": "1.0.0",
+  "description": "TrustLens React 组件 —— 零构建，无需编译步骤",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "require": "./src/index.js"
+    }
+  },
+  "files": ["src", "README.md"],
+  "peerDependencies": {
+    "react": ">=17",
+    "trust-lens-core": "^1.0.0"
+  },
+  "keywords": ["privacy", "transparency", "react", "trust"],
+  "license": "MIT"
+}

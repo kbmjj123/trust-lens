@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TrustLens · CDN 接入示例</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 720px; margin: 60px auto; padding: 0 20px; line-height: 1.7; }
+  h1 { font-size: 22px; }
+  button { padding: 8px 14px; margin-right: 8px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+  button:hover { background: #f3f4f6; }
+  code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>TrustLens · CDN 接入示例</h1>
+  <p>右下角会出现「🛡️ 数据透明」浮标，点击即可查看本页所有请求。</p>
+  <p>点击下方按钮会触发不同类型的请求，观察面板如何分类：</p>
+  <p>
+    <button onclick="fetch('/api/convert', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({filename:'私密文件.pdf', content:'敏感内容'})})">
+      触发「已声明」接口
+    </button>
+    <button onclick="fetch('https://www.google-analytics.com/g/collect?v=1&tid=UA-1', {method:'POST'})">
+      触发「第三方追踪」
+    </button>
+    <button onclick="fetch('/api/secret-upload', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password:'123456'})})">
+      触发「未声明提交」
+    </button>
+  </p>
+  <p>注意：面板里你只能看到<code>字段名</code>（如 filename、password），<b>永远看不到具体值</b>。</p>
+
+  <!-- ① 引入 CDN 脚本（defer，绝不阻塞渲染） -->
+  <script src="../packages/core/dist/trust-lens.min.js" defer></script>
+
+  <!-- ② 用自定义元素接入，claims 声明每个接口的用途 -->
+  <trust-lens
+    site-name="TrustLens 示例站"
+    claims='[
+      {"pattern":"/api/convert","label":"文件格式转换","data":"文件内容在你的浏览器本地处理，仅上传文件名用于记录","scope":"input"}
+    ]'>
+  </trust-lens>
+</body>
+</html>

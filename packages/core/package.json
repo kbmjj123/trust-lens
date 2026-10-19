@@ -1,0 +1,25 @@
+{
+  "name": "trust-lens-core",
+  "version": "1.0.0",
+  "description": "让网站把数据流向摊开给用户看的开源组件 —— 零依赖、零网络请求",
+  "type": "module",
+  "main": "./dist/trust-lens.cjs.js",
+  "module": "./dist/trust-lens.esm.js",
+  "unpkg": "./dist/trust-lens.min.js",
+  "jsdelivr": "./dist/trust-lens.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/trust-lens.esm.js",
+      "require": "./dist/trust-lens.cjs.js"
+    },
+    "./cdn": "./dist/trust-lens.min.js"
+  },
+  "files": ["dist", "src", "README.md"],
+  "sideEffects": false,
+  "keywords": ["privacy", "transparency", "network", "trust", "gdpr"],
+  "license": "MIT",
+  "scripts": {
+    "build": "node ../../scripts/build.mjs"
+  }
+}

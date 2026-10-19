@@ -1,0 +1,22 @@
+{
+  "name": "trust-lens-example-react",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TrustLens React 接入示例（可直接运行的完整 Vite 工程）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "trust-lens-core": "file:../../packages/core",
+    "trust-lens-react": "file:../../packages/react"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.0"
+  }
+}

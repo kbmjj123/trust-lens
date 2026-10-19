@@ -1,0 +1,60 @@
+name: Verify Showcase
+
+on:
+  pull_request:
+    paths:
+      - 'showcase/sites.json'
+      - 'packages/core/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出 PR 分支
+        uses: actions/checkout@v4
+        with:
+          path: pr
+
+      - name: 检出基线分支
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        working-directory: pr
+        run: npm install
+
+      - name: 安装浏览器
+        working-directory: pr
+        run: npx playwright install --with-deps chromium
+
+      - name: 提取新增站点并验证
+        working-directory: pr
+        env:
+          BASE_JSON: ../base/showcase/sites.json
+        run: node scripts/verify-pr.mjs
+
+      - name: 评论验证结果
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const p = 'pr/verify-comment.md';
+            if (!fs.existsSync(p)) { core.info('无新增站点，跳过评论'); return; }
+            const body = fs.readFileSync(p, 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number
+            });
+            const bot = comments.find(c => c.user.type === 'Bot' && c.body.includes('TrustLens 自动验证'));
+            if (bot) await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: bot.id, body });
+            else await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });

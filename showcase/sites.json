@@ -1,0 +1,12 @@
+{
+  "sites": [
+    {
+      "name": "TrustLens 官方示例站",
+      "url": "https://trustlens.dev",
+      "desc": "组件能力演示：已声明 / 追踪 / 未声明三类请求的识别效果",
+      "category": "开发工具",
+      "level": "L3",
+      "verifiedAt": "2026-10-19"
+    }
+  ]
+}
