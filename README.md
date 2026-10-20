@@ -1,68 +1,70 @@
 # 🔍 TrustLens
 
-> 让网站把数据流向摊开给用户看 —— 零依赖、零网络请求、零内容留存的开源透明组件。
+> An open-source transparency component that lays out a website's data flows for users to see — zero dependencies, zero network requests, zero content retention.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Bundle size](https://img.shields.io/badge/CDN%20Bundle-25KB-brightgreen.svg)](./packages/core/dist)
 
----
-
-## 它解决什么问题
-
-纯前端工具站都在说「你的数据不会上传到服务器」，但用户**无法验证**。
-
-TrustLens 把这个口头承诺变成**可亲眼看到的事实**：
-
-- 用户点开右下角浮标，就能看到这个页面发出的每一个请求
-- 每个请求都被翻译成人话：「📊 向 Google 上报了你的浏览行为」而不是 `POST /g/collect`
-- 站点声明了哪些接口传了什么数据，组件就如实展示；**没声明却偷偷传数据的，会被标红**
-
-对站点方来说，这是最低成本的信任基建；对用户来说，这是一面能照出数据流向的镜子。
+📖 简体中文文档：[README.zh-CN.md](./README.zh-CN.md)
 
 ---
 
-## 效果预览
+## The problem it solves
+
+Every client-side tool site claims "your data is never uploaded to our servers" — yet users **cannot verify** it.
+
+TrustLens turns that verbal promise into something **you can see with your own eyes**:
+
+- Users open the bottom-right floating badge to see every request the page has made
+- Each request is translated into plain language: "📊 Reported your browsing behavior to Google" instead of `POST /g/collect`
+- Whatever endpoints the site declares (and what data they send) is shown honestly; **anything sent without declaration is flagged in red**
+
+For site owners, this is the lowest-cost trust infrastructure; for users, it's a mirror that reflects where their data flows.
+
+---
+
+## Preview
 
 ```
 ┌──────────────────────────────────────────┐
-│ 🛡️ 数据透明面板          JSON 格式化工具  │
+│ 🛡️ Data Transparency Panel   JSON Formatter│
 ├──────────────────────────────────────────┤
-│  本次浏览概览                             │
-│  6 总请求   1 高风险   1 需留意   4 低风险 │
-│  ✅ 未检测到你的输入内容被发送到外部       │
+│  This browsing session overview          │
+│  6 requests   1 high-risk   1 caution   4 low-risk │
+│  ✅ No input content detected sent externally │
 ├──────────────────────────────────────────┤
-│ ✅ 文件格式转换              POST         │
+│ ✅ File format conversion        POST     │
 │    127.0.0.1 · 200 · 12ms                │
-│    ├ 这个请求做了什么？                   │
-│    │  文件内容在你的浏览器本地处理         │
-│    ├ 携带了什么？                         │
-│    │  字段：filename（仅字段名，不含内容） │
-│    └ 风险等级：需留意                     │
+│    ├ What did this request do?           │
+│    │  File content processed locally in your browser │
+│    ├ What did it carry?                  │
+│    │  Fields: filename (name only, no content) │
+│    └ Risk level: caution                 │
 ├──────────────────────────────────────────┤
-│ ⚠️ 向 127.0.0.1 提交了数据（站点未声明）  │
-│    建议向站点所有者确认                   │
+│ ⚠️ Submitted data to 127.0.0.1 (undeclared by site) │
+│    Consider confirming with the site owner │
 └──────────────────────────────────────────┘
 ```
 
 ---
 
-## 快速开始
+## Quick Start
 
-### ① CDN（推荐，静态站零构建）
+### ① CDN (recommended, zero-build for static sites)
 
 ```html
-<!-- 放在 </body> 前，defer 保证不阻塞渲染 -->
+<!-- Place before </body>; defer ensures it never blocks rendering -->
 <script src="https://cdn.jsdelivr.net/npm/trust-lens-core/dist/trust-lens.min.js" defer></script>
 
 <trust-lens
-  site-name="我的工具站"
+  site-name="My Tool Site"
   claims='[
-    {"pattern":"/api/convert","label":"文件格式转换","data":"文件内容在浏览器本地处理，仅上传文件名","scope":"input"}
+    {"pattern":"/api/convert","label":"File format conversion","data":"File content is processed locally in the browser; only the filename is uploaded","scope":"input"}
   ]'>
 </trust-lens>
 ```
 
-想彻底摆脱第三方 CDN？下载 `trust-lens.min.js`（25KB）放到自己的服务器即可。
+Want to ditch third-party CDNs entirely? Download `trust-lens.min.js` (25KB) and host it on your own server.
 
 ### ② Vue 3
 
@@ -75,12 +77,12 @@ npm i trust-lens-core trust-lens-vue
 import { TrustLens } from 'trust-lens-vue'
 
 const claims = [
-  { pattern: '/api/convert', label: '文件格式转换', data: '本地处理，不上传内容', scope: 'input' },
+  { pattern: '/api/convert', label: 'File format conversion', data: 'Processed locally, no content uploaded', scope: 'input' },
 ]
 </script>
 
 <template>
-  <TrustLens site-name="我的工具站" :claims="claims" />
+  <TrustLens site-name="My Tool Site" :claims="claims" />
 </template>
 ```
 
@@ -94,15 +96,15 @@ npm i trust-lens-core trust-lens-react
 import TrustLens from 'trust-lens-react'
 
 const claims = [
-  { pattern: '/api/convert', label: '文件格式转换', data: '本地处理，不上传内容', scope: 'input' },
+  { pattern: '/api/convert', label: 'File format conversion', data: 'Processed locally, no content uploaded', scope: 'input' },
 ]
 
 export default function App() {
-  return <TrustLens siteName="我的工具站" claims={claims} />
+  return <TrustLens siteName="My Tool Site" claims={claims} />
 }
 ```
 
-不想要浮窗，只想自己渲染 UI？组件返回 `null`，用 `ref` 拿数据自建界面：
+Don't want the floating panel — just render your own UI? The component returns `null`; grab the data via `ref` to build your own interface:
 
 ```jsx
 const ref = useRef()
@@ -112,188 +114,188 @@ const ref = useRef()
 
 ---
 
-## 声明接口：claims
+## Declaring endpoints: claims
 
-站点通过 `claims` 主动说明「每个接口在干什么」。组件会拿声明与实际请求做比对。
+A site proactively explains "what each endpoint does" via `claims`. The component compares the declarations against the actual requests.
 
 ```js
 {
-  pattern: '/api/convert',                  // 字符串子串 / glob(*) / 正则 / 函数
-  label: '文件格式转换',                     // 人话用途
-  data: '文件内容在浏览器本地处理，仅上传文件名', // 人话数据说明
+  pattern: '/api/convert',                  // substring / glob(*) / RegExp / function
+  label: 'File format conversion',          // human-readable purpose
+  data: 'File content is processed locally in the browser; only the filename is uploaded', // human-readable data note
   scope: 'input'                            // none | meta | input | credential
 }
 ```
 
-`scope` 决定风险色：`none`/`meta` 绿色，`input` 橙色，`credential` 红色。
+`scope` determines the risk color: `none`/`meta` green, `input` orange, `credential` red.
 
-**不写 claims 也可以跑**，只是所有数据请求会被标成「未声明」，拿不到 L3 等级。
+**It runs even without claims** — all data requests will simply be marked "undeclared" and the site won't reach L3.
 
 ---
 
-## 请求是怎么被翻译的
+## How requests get translated
 
-| 分类 | 含义 | 风险 |
+| Category | Meaning | Risk |
 |---|---|:---:|
-| 📦 页面资源 | 脚本 / 样式 / 字体 / 图片，不含用户输入 | 🟢 |
-| ✅ 已声明接口 | 站点已说明用途，附带站点自己的说明 | 🟢🟠 |
-| 🔄 本站通信 | 与本站域名通信，未检测到提交内容 | 🟢 |
-| 🎯 第三方追踪 | 命中内置追踪域名表（Google Analytics / 百度统计 / Sentry 等 30+） | 🟠🔴 |
-| 🔑 身份凭证外发 | 向**非本站**域名发送了 Cookie / Authorization | 🔴 |
-| ⚠️ 未声明的数据提交 | 携带了用户数据，但站点没声明这个接口 | 🔴 |
-| ❓ 用途不明 | 无法自动判断 | 🟠 |
+| 📦 Page assets | scripts / styles / fonts / images, no user input | 🟢 |
+| ✅ Declared endpoints | purpose declared by the site, with the site's own explanation | 🟢🟠 |
+| 🔄 Same-site communication | communicating with the site's own domain, no submitted content detected | 🟢 |
+| 🎯 Third-party tracking | matches the built-in tracker domain list (Google Analytics / Baidu Tongji / Sentry, 30+ in total) | 🟠🔴 |
+| 🔑 Credential leakage | sent Cookie / Authorization to a **non-same-site** domain | 🔴 |
+| ⚠️ Undeclared data submission | carried user data but the site never declared this endpoint | 🔴 |
+| ❓ Purpose unknown | cannot be auto-classified | 🟠 |
 
 ---
 
-## 隐私底线（可被审计的承诺）
+## Privacy baseline (an auditable promise)
 
-一个透明度工具，必须自己先做到透明。组件严格遵守三条底线，欢迎逐行审计：
+A transparency tool must be transparent itself. The component strictly follows three baselines — feel free to audit line by line:
 
-| 底线 | 实现 |
+| Baseline | Implementation |
 |---|---|
-| **零网络请求** | 组件自身不发起任何请求，不加载远程字体 / 图标 / 脚本 |
-| **零内容留存** | 请求体只保留**字段名与体积**，请求头只保留**键名**，绝不保存具体值 |
-| **零持久化** | 记录仅存内存，页面关闭即销毁，不写 localStorage / IndexedDB |
+| **Zero network requests** | the component itself makes no requests and loads no remote fonts / icons / scripts |
+| **Zero content retention** | request bodies keep only **field names and size**; request headers keep only **key names**; values are never stored |
+| **Zero persistence** | records live only in memory and are destroyed when the page closes; nothing is written to localStorage / IndexedDB |
 
-> 例如你提交 `{password: "123456"}`，面板只会显示「字段：password」，值为 `123456` 的事实**根本不会进入组件的任何数据结构**。
+> For example, if you submit `{password: "123456"}`, the panel only shows "Field: password" — the fact that the value is `123456` **never enters any data structure of the component**.
 
-想在控制台自查？打开任意集成了 TrustLens 的页面：
+Want to self-check in the console? Open any page integrated with TrustLens:
 
 ```js
-TrustLens.getSummary()   // 当前统计
-TrustLens.getGrade()     // 站点透明度等级
+TrustLens.getSummary()   // current stats
+TrustLens.getGrade()     // site transparency grade
 ```
 
 ---
 
-## 🌐 Showcase 展示墙
+## 🌐 Showcase Wall
 
-集成了 TrustLens 的站点可以提交 PR 加入展示墙，README 与官网会展示你的站点名称、简介与外链。
+Sites integrating TrustLens can submit a PR to join the wall; the README and official site will display your site name, description, and external link.
 
-| 站点 | 简介 | 等级 |
+| Site | Description | Grade |
 |---|---|:---:|
-| [TrustLens 官方示例站](https://trustlens.dev) | 组件能力演示 | 🥇 L3 |
+| [TrustLens Official Demo](https://trustlens.dev) | Component capability demo | 🥇 L3 |
 
-**等级由 CI 自动判定，不靠自评：**
+**Grades are auto-determined by CI, not self-assessed:**
 
-| 等级 | 条件 | 展示权重 |
+| Grade | Condition | Display weight |
 |:---:|---|:---:|
-| 🥇 L3 | 声明完整 + 实测无未声明的数据提交 | 精选区 + 首页推荐 |
-| 🥈 L2 | 已声明接口，但存在未声明请求 | 卡片区 |
-| 🥉 L1 | 仅引入组件 | 列表区 |
+| 🥇 L3 | Complete declarations + verified no undeclared data submission | Featured + homepage recommendation |
+| 🥈 L2 | Declared endpoints exist, but undeclared requests are present | Card area |
+| 🥉 L1 | Component merely embedded | List area |
 
-验证方式：GitHub Actions 用真实浏览器访问你的站点，检测组件是否渲染、声明是否完整、有无未声明的数据提交。
+Verification: GitHub Actions visits your site with a real browser, checking whether the component renders, whether declarations are complete, and whether any undeclared data submissions exist.
 
-👉 完整规则见 [CONTRIBUTING.md](./CONTRIBUTING.md)。提交前请确认站点有实质内容、合法合规、公开可访问。
+👉 See [CONTRIBUTING.md](./CONTRIBUTING.md) for full rules. Before submitting, please ensure your site has substantial content, is lawful and compliant, and is publicly accessible.
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```
 trust-lens/
-├── packages/                # 三个发布包
-│   ├── core/                # 零依赖核心（25KB CDN 单文件）
+├── packages/                # three publishable packages
+│   ├── core/                # zero-dependency core (25KB CDN single file)
 │   │   ├── src/
-│   │   │   ├── collector.js    请求采集：fetch / XHR / Resource Timing
-│   │   │   ├── classifier.js   请求分类 —— 翻译成人话
-│   │   │   ├── claims.js       站点声明匹配
-│   │   │   ├── trackers.js     追踪域名表（社区维护）
-│   │   │   ├── ui.js           Shadow DOM 浮窗
-│   │   │   └── index.js        入口 + Web Component
-│   │   └── dist/               三种产物：esm / cjs / min(IIFE)
-│   ├── vue/                 # trust-lens-vue（零构建）
-│   └── react/               # trust-lens-react（零构建，纯 JS 无 JSX）
-├── examples/                # 可运行示例工程
-│   ├── cdn.html             纯 HTML + CDN
-│   ├── vue3/                Vue 3 + Vite 完整工程
-│   └── react/               React 18 + Vite 完整工程
-├── showcase/sites.json      # 展示墙数据源（PR 改这里）
+│   │   │   ├── collector.js    request collection: fetch / XHR / Resource Timing
+│   │   │   ├── classifier.js   request classification — translated to plain language
+│   │   │   ├── claims.js       site declaration matching
+│   │   │   ├── trackers.js     tracker domain list (community-maintained)
+│   │   │   ├── ui.js           Shadow DOM floating panel
+│   │   │   └── index.js        entry point + Web Component
+│   │   └── dist/               three artifacts: esm / cjs / min(IIFE)
+│   ├── vue/                 # trust-lens-vue (zero-build)
+│   └── react/               # trust-lens-react (zero-build, pure JS no JSX)
+├── examples/                # runnable example projects
+│   ├── cdn.html             plain HTML + CDN
+│   ├── vue3/                Vue 3 + Vite full project
+│   └── react/               React 18 + Vite full project
+├── showcase/sites.json      # showcase wall data source (edit via PR)
 ├── scripts/
-│   ├── verify-site.mjs      单站点验证（真实浏览器）
-│   └── verify-pr.mjs        PR 批量验证
-├── test-local.mjs           # core 功能验证
-└── test-examples.mjs        # 示例工程端到端验证
+│   ├── verify-site.mjs      single-site verification (real browser)
+│   └── verify-pr.mjs        PR batch verification
+├── test-local.mjs           # core functional verification
+└── test-examples.mjs        # example project end-to-end verification
 ```
 
-两个 wrapper 包（`vue` / `react`）都是**零构建**的：
-Vue 版用 `h()` 渲染函数，React 版用 `createElement`，不含任何 JSX / SFC，
-发布到 npm 时无需编译步骤。
+The two wrapper packages (`vue` / `react`) are both **zero-build**:
+The Vue version uses the `h()` render function, the React version uses `createElement`, containing no JSX / SFC,
+so no compilation step is needed when publishing to npm.
 
 ---
 
-## 本地开发
+## Local Development
 
 ```bash
 npm install
-npm run build            # 打包 core → packages/core/dist
-node test-local.mjs      # 起本地服务 + 真实浏览器跑功能验证
-node scripts/verify-site.mjs https://your-site.com   # 验证任意线上站点
+npm run build            # bundle core → packages/core/dist
+node test-local.mjs      # start local server + run functional verification in a real browser
+node scripts/verify-site.mjs https://your-site.com   # verify any live site
 ```
 
-## 可运行的示例工程
+## Runnable Example Projects
 
-`examples/` 下有三个**开箱即跑**的完整工程，详见 [examples/README.md](./examples/README.md)。
+`examples/` contains three **ready-to-run** complete projects; see [examples/README.md](./examples/README.md) for details.
 
-| 示例 | 启动方式 |
+| Example | How to start |
 |---|---|
-| 纯 HTML + CDN | 浏览器直接打开 `examples/cdn.html` |
+| Plain HTML + CDN | open `examples/cdn.html` directly in a browser |
 | Vue 3 + Vite | `cd examples/vue3 && npm install && npm run dev` |
 | React 18 + Vite | `cd examples/react && npm install && npm run dev` |
 
-示例内置了 `/api/*` 假接口和三个触发按钮，可以真实看到「已声明 / 未声明 / 第三方追踪」
-三类请求是怎么被识别和翻译的。同时也演示了**自带浮窗**和**用 ref 自建 UI**两种姿势。
+The examples ship with a mock `/api/*` backend and three trigger buttons, so you can actually see how "declared / undeclared / third-party tracking"
+requests are identified and translated. They also demonstrate two patterns: **the built-in floating panel** and **building your own UI via ref**.
 
-改完组件源码后跑端到端验证：
+After changing component source, run end-to-end verification:
 
 ```bash
 cd examples/vue3  && npx vite build
 cd examples/react && npx vite build
-node test-examples.mjs   # 真实浏览器打开两个构建产物并断言
+node test-examples.mjs   # open both build artifacts in a real browser and assert
 ```
 
 ---
 
-## 路线图
+## Roadmap
 
-- [x] 核心采集与分类
-- [x] CDN / Vue3 / React 三种接入
-- [x] Showcase 与 CI 自动等级判定
-- [ ] 规则库插件机制（社区众包追踪域名）
-- [ ] 多语言（英文版文案）
-- [ ] 自定义面板主题与埋点无关的导出报告
-- [ ] 与 Privacy Badger 等扩展的联动展示
-
----
-
-## 常见问题
-
-**Q：响应体能看到吗？**
-A：不能。浏览器限制了 JS 读取响应体，组件只采集 URL、方法、状态码、耗时、请求头键名与请求体字段名。
-
-**Q：会影响页面性能吗？**
-A：fetch / XHR 走轻量包装（只记录元数据），静态资源走 PerformanceObserver 原生采集，不侵入。CDN 单文件 25KB，`defer` 加载不阻塞渲染。
-
-**Q：站点偷偷不声明就能绕过吗？**
-A：不能。未声明但携带数据的请求会被标为「⚠️ 未声明的数据提交」并算高风险 —— 站点没有机会撒谎，只能选择透明。
-
-**Q：能提交到 cdnjs 吗？**
-A：npm 包已自动支持 jsDelivr / unpkg。cdnjs 需要通过其官方流程申请，欢迎协助提交。
+- [x] Core collection and classification
+- [x] CDN / Vue3 / React three integration paths
+- [x] Showcase wall and CI auto grade determination
+- [x] Multi-language (English copy)
+- [ ] Rule plugin mechanism (community-sourced tracker domains)
+- [ ] Custom panel themes and exportable reports unrelated to analytics
+- [ ] Integration display with extensions like Privacy Badger
 
 ---
 
-## 已知限制（透明承诺的边界）
+## FAQ
 
-TrustLens 通过 Monkey-patch 采集请求，以下边界请在集成前知悉：
+**Q: Can the response body be seen?**
+A: No. The browser restricts JS from reading response bodies; the component only collects URL, method, status code, duration, request header key names, and request body field names.
 
-- **提前缓存 `fetch` 引用会绕过拦截**：若页面在组件初始化前执行了 `const f = window.fetch; f(...)`，该调用不会被记录。组件应在应用入口尽早引入。
-- **WebSocket / sendBeacon 仅记录连接与目标**：实时通道与信标会被记录「与谁通信」，但无法读取其帧内容（同样符合「不保存具体值」的底线）。
-- **URL 查询参数值会被脱敏展示**：面板与记录中 URL 的 `?k=***` 仅保留参数名、隐藏参数值；但站点自有浏览器控制台的原始请求仍含完整 URL，这是浏览器层面的限制，并非组件泄露。
-- **跨站身份凭证判定基于显式信号**：仅当请求头含 `Authorization/Cookie` 等，或 `fetch` 显式 `credentials:'include'`、`XMLHttpRequest.withCredentials=true` 时才会标为跨站凭证外发；浏览器自动附加但未显式声明的凭证可能不被识别。
-- **响应体不可见**：浏览器限制 JS 读取响应体，组件只采集 URL、方法、状态码、耗时、请求头键名与请求体字段名。
+**Q: Does it affect page performance?**
+A: fetch / XHR go through a lightweight wrapper (only metadata is recorded); static resources use native PerformanceObserver collection, non-intrusive. The CDN single file is 25KB and loads with `defer`, never blocking rendering.
 
-## 许可
+**Q: Can a site bypass this by simply not declaring?**
+A: No. Undeclared requests that carry data are flagged as "⚠️ Undeclared data submission" and counted as high-risk — the site has no opportunity to lie, it can only choose transparency.
 
-[MIT](./LICENSE) —— 随便用，商业项目亦可，无需署名（但署名会很感谢）。
+**Q: Can it be submitted to cdnjs?**
+A: The npm package already auto-supports jsDelivr / unpkg. cdnjs requires going through its official process; contributions are welcome.
 
-如果这个项目帮到了你，欢迎给个 ⭐，或在你的站点集成后提个 PR 加入展示墙。
+---
+
+## Known Limitations (the boundary of the transparency promise)
+
+TrustLens collects requests through Monkey-patching. Please be aware of the following boundaries before integrating:
+
+- **Caching the `fetch` reference in advance bypasses interception**: if the page executes `const f = window.fetch; f(...)` before the component initializes, that call will not be recorded. The component should be imported as early as possible at the app entry point.
+- **WebSocket / sendBeacon only record the connection and target**: real-time channels and beacons are recorded as "who you're communicating with", but their frame content cannot be read (which still complies with the "no values stored" baseline).
+- **URL query parameter values are masked in display**: the `?k=***` in the panel and records keeps only the parameter name and hides the value; however, the raw requests in the site's own browser console still contain the full URL — this is a browser-level limitation, not a component leak.
+- **Cross-site credential detection is based on explicit signals**: only when the request header contains `Authorization/Cookie` etc., or `fetch` explicitly sets `credentials:'include'`, or `XMLHttpRequest.withCredentials=true`, will it be flagged as cross-site credential leakage; credentials automatically attached by the browser but not explicitly declared may not be recognized.
+- **Response body is invisible**: the browser restricts JS from reading response bodies; the component only collects URL, method, status code, duration, request header key names, and request body field names.
+
+## License
+
+[MIT](./LICENSE) — free to use, including commercial projects, no attribution required (but attribution is much appreciated).
+
+If this project helped you, please give it a ⭐, or submit a PR to join the showcase wall after integrating it into your site.

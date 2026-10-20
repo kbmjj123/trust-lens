@@ -19,7 +19,14 @@
   "sideEffects": false,
   "keywords": ["privacy", "transparency", "network", "trust", "gdpr"],
   "license": "MIT",
+  "author": "zhenggl <kbmjj123@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kbmjj123/trust-lens.git"
+  },
+  "homepage": "https://github.com/kbmjj123/trust-lens#readme",
   "scripts": {
-    "build": "node ../../scripts/build.mjs"
+    "build": "node ../../scripts/build.mjs",
+    "prepublishOnly": "npm run build"
   }
 }
