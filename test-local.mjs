@@ -27,7 +27,11 @@ const server = http.createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(8901, r));
 
-const CHROME_PATH = ['/usr/bin/google-chrome', '/usr/local/bin/chromium'].find((p) => existsSync(p));
+const CHROME_PATH = [
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome',
+  '/usr/local/bin/chromium',
+].find((p) => existsSync(p));
 const browser = await chromium.launch({ executablePath: CHROME_PATH });
 const page = await browser.newPage();
 page.on('pageerror', (e) => console.log('[页面异常]', String(e)));

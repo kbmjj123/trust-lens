@@ -11,6 +11,8 @@ const MAX_RECORDS = 500;
 const listeners = new Set();
 const seenUrls = new Set();
 let resourceObserver = null;
+let started = false;
+const records = [];
 
 /* ────────────── 工具函数 ────────────── */
 
@@ -181,7 +183,7 @@ function emitUpdate(rec) {
 /* ────────────── Hook：fetch ────────────── */
 
 function hookFetch() {
-  if (typeof window === 'undefined' || window.fetch !== 'function') return;
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') return;
   const orig = window.fetch;
   if (orig.__trustLens) return;
 

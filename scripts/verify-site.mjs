@@ -9,7 +9,12 @@ if (!url) {
 
 // 优先使用系统已安装的 Chromium，避免 CI 环境额外下载
 const CHROME_PATH =
-  process.env.CHROME_PATH || ['/usr/bin/google-chrome', '/usr/local/bin/chromium'].find((p) => existsSync(p));
+  process.env.CHROME_PATH ||
+  [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/usr/bin/google-chrome',
+    '/usr/local/bin/chromium',
+  ].find((p) => existsSync(p));
 
 const browser = await chromium.launch(CHROME_PATH ? { executablePath: CHROME_PATH } : {});
 const page = await browser.newPage();
